@@ -1,0 +1,20 @@
+# Example configuration. Copy it, then adapt it to your database.
+source:
+  type: pg_dump
+  storage:
+    type: s3
+    endpoint: https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
+    bucket: db-backups
+    prefix: my-app/
+target:
+  engine: postgres
+  version: "16"
+checks:
+  - name: users-not-empty
+    sql: "SELECT count(*) FROM users"
+    expect: "> 0"
+  - name: backup-freshness
+    sql: "SELECT now() - max(created_at) FROM transactions"
+    expect: "< 26h"
+limits:
+  restore_timeout: 15m
