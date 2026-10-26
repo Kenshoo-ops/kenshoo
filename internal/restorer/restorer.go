@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/Kenshoo-ops/kenshoo/internal/storage"
 )
@@ -23,6 +24,14 @@ var (
 type Artifact struct {
 	Name string
 	Path string
+}
+
+// Remove deletes the downloaded file. It is safe to call on an empty Artifact.
+func (a Artifact) Remove() error {
+	if a.Path == "" {
+		return nil
+	}
+	return os.Remove(a.Path)
 }
 
 // Target is the empty database to restore into.
