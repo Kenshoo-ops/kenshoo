@@ -4,7 +4,7 @@
 
 kenshoo (from the Japanese 検証, *kenshō*, "verification") restores your latest database backup into a throwaway database, runs checks against the restored data, and reports whether the backup is really usable. A backup job that finishes with "success" only proves a file was written. kenshoo proves the file works.
 
-> **Status: early development.** The design is settled, but the code is not written yet. Nothing in this repository is usable today. See the [roadmap](#roadmap).
+> **Status: early development.** The skeleton is in place and tested (configuration, the `Store`, `Querier`, `Check` and `Restorer` interfaces, state logic), and a `pg_dump` fetch step works against an in-memory store. The restore itself, real storage and the checks are not implemented yet, so kenshoo cannot verify a real backup today. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -64,21 +64,24 @@ kenshoo only *verifies* backups. It does not take or manage them.
 
 ## Part of a larger project
 
-kenshoo is one of three repositories in the [Kenshoo-ops](https://github.com/Kenshoo-ops) organization:
+kenshoo is one of four repositories in the [Kenshoo-ops](https://github.com/Kenshoo-ops) organization:
 
 | Repository | Purpose |
 |---|---|
 | **kenshoo** (this repo) | The verifier, written in Go |
-| [kenshoo-platform](https://github.com/Kenshoo-ops/kenshoo-platform) | Infrastructure: Terraform, k3s, Argo CD, Kyverno policies, observability |
+| [kenshoo-platform](https://github.com/Kenshoo-ops/kenshoo-platform) | Infrastructure and GitOps: Terraform, Argo CD, Kyverno policies, Prometheus. Runs on a local k3d cluster today |
 | [kenshoo-workflows](https://github.com/Kenshoo-ops/kenshoo-workflows) | Reusable CI pipeline that builds, scans, signs and attests the images |
+| [sample-app](https://github.com/Kenshoo-ops/sample-app) | A tiny app used to test the pipeline and the admission policy |
 
 The pipeline signs the image, the cluster refuses anything unsigned, and the verifier runs on that cluster. A tool that reads production backups should itself be deployed safely.
 
 ## Roadmap
 
-- [ ] Verifier skeleton: configuration, logging, `Restorer` and `Check` interfaces
-- [ ] `pg_dump` restorer reading from S3-compatible storage
-- [ ] Built-in checks and custom SQL checks
+- [x] Verifier skeleton: configuration, `Store`, `Querier`, `Check` and `Restorer` interfaces, state logic, unit tests
+- [x] `pg_dump` fetch step with an in-memory store
+- [ ] S3-compatible store (OCI Object Storage)
+- [ ] `pg_restore` restore step
+- [ ] Postgres query layer, built-in checks and custom SQL checks
 - [ ] Prometheus metrics and Telegram alerts
 - [ ] Container image and Helm chart
 - [ ] Additional restorers (WAL-G, pgBackRest)
