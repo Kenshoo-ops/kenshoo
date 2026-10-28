@@ -31,6 +31,7 @@ type Source struct {
 type Storage struct {
 	Type     string `yaml:"type"`
 	Endpoint string `yaml:"endpoint"`
+	Region   string `yaml:"region"`
 	Bucket   string `yaml:"bucket"`
 	Prefix   string `yaml:"prefix"`
 }
@@ -89,6 +90,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Source.Storage.Bucket == "" {
 		add("source.storage.bucket is required")
+	}
+	if c.Source.Storage.Region == "" {
+		add("source.storage.region is required (for OCI, the region identifier such as af-casablanca-1)")
 	}
 	if c.Target.Engine != "postgres" {
 		add("target.engine must be %q (got %q)", "postgres", c.Target.Engine)
