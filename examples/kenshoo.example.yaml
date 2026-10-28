@@ -4,6 +4,8 @@ source:
   storage:
     type: s3
     endpoint: https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
+    # The OCI region identifier of the bucket, for example af-casablanca-1.
+    region: "<region-identifier>"
     bucket: db-backups
     prefix: my-app/
 target:

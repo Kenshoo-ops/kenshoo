@@ -34,6 +34,7 @@ source:
   storage:
     type: s3
     endpoint: https://<s3-compatible-endpoint>
+    region: <region>
     bucket: db-backups
     prefix: my-app/
 target:

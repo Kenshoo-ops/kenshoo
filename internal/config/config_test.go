@@ -12,7 +12,7 @@ func validConfig() Config {
 	return Config{
 		Source: Source{
 			Type:    "pg_dump",
-			Storage: Storage{Type: "s3", Bucket: "backups"},
+			Storage: Storage{Type: "s3", Bucket: "backups", Region: "af-casablanca-1"},
 		},
 		Target: Target{Engine: "postgres", Version: "16"},
 		Checks: []Check{{Name: "users", SQL: "SELECT count(*) FROM users", Expect: "> 0"}},
@@ -28,6 +28,7 @@ func TestValidate(t *testing.T) {
 		{"valid", func(c *Config) {}, ""},
 		{"wrong source type", func(c *Config) { c.Source.Type = "wal-g" }, "source.type"},
 		{"missing bucket", func(c *Config) { c.Source.Storage.Bucket = "" }, "bucket"},
+		{"missing region", func(c *Config) { c.Source.Storage.Region = "" }, "region"},
 		{"wrong engine", func(c *Config) { c.Target.Engine = "mysql" }, "target.engine"},
 		{"no checks", func(c *Config) { c.Checks = nil }, "at least one check"},
 		{"unnamed check", func(c *Config) { c.Checks[0].Name = "" }, "name is required"},
@@ -71,6 +72,7 @@ source:
   storage:
     type: s3
     bucket: backups
+    region: af-casablanca-1
 target:
   engine: postgres
   version: "16"
