@@ -69,6 +69,9 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, newSt
 		return 0
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, cfg.Limits.RestoreTimeout)
+	defer cancel()
+
 	rs, err := restorer.New(cfg.Source.Type)
 	if err != nil {
 		fmt.Fprintf(stderr, "error: %v\n", err)
@@ -86,6 +89,10 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, newSt
 			fmt.Fprintf(stderr, "no backup found under prefix %q\n", cfg.Source.Storage.Prefix)
 			return 4
 		}
+		if timedOut(ctx) {
+			fmt.Fprintf(stderr, "error: timed out after %s (limits.restore_timeout)\n", cfg.Limits.RestoreTimeout)
+			return 1
+		}
 		fmt.Fprintf(stderr, "error: fetch backup: %v\n", err)
 		return 1
 	}
@@ -97,8 +104,17 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, newSt
 			fmt.Fprintf(stderr, "restoring %q backups is not implemented yet\n", cfg.Source.Type)
 			return 3
 		}
+		if timedOut(ctx) {
+			fmt.Fprintf(stderr, "error: timed out after %s (limits.restore_timeout)\n", cfg.Limits.RestoreTimeout)
+			return 1
+		}
 		fmt.Fprintf(stderr, "error: restore: %v\n", err)
 		return 1
 	}
 	return 0
+}
+
+// timedOut reports whether the run's deadline ended the call, as opposed to a real failure.
+func timedOut(ctx context.Context) bool {
+	return errors.Is(ctx.Err(), context.DeadlineExceeded)
 }
