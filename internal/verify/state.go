@@ -27,6 +27,11 @@ const (
 
 // Decide turns the outcome of each step into one State. Keeping Error separate from
 // RestoreFailed tells you whether the backup is bad or the verifier is broken.
+//
+// Precedence, highest first: NoBackup, fetch Error, RestoreFailed, restore Error,
+// an errored check (Error), a failed check (CheckFailed), then Verified. An errored
+// check wins over a failed one: a verifier that could not run a query says nothing
+// about the data, so the run is reported as a broken verifier, not a bad backup.
 func Decide(fetchErr, restoreErr error, results []check.Result) State {
 	switch {
 	case errors.Is(fetchErr, storage.ErrNoBackup):
