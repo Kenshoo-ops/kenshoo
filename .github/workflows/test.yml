@@ -8,12 +8,29 @@ on:
 permissions:
   contents: read
 
+env:
+  KENSHOO_TEST_PG_DSN: postgres://postgres:test@localhost:5432/postgres?sslmode=disable
+
 jobs:
   test:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: go.mod
       - name: Check formatting
@@ -22,3 +39,11 @@ jobs:
         run: go vet ./...
       - name: Test
         run: go test -race ./...
+      - name: Integration tests must run, not skip
+        run: |
+          set -o pipefail
+          go test -race -count=1 -v ./internal/pgdb | tee "$RUNNER_TEMP/pgdb.log"
+          if grep -q -- '--- SKIP' "$RUNNER_TEMP/pgdb.log"; then
+            echo "pgdb tests were skipped: KENSHOO_TEST_PG_DSN is not reaching them" >&2
+            exit 1
+          fi
