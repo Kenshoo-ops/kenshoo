@@ -16,7 +16,7 @@ checks:
     sql: "SELECT count(*) FROM users"
     expect: "> 0"
   - name: backup-freshness
-    sql: "SELECT now() - max(created_at) FROM transactions"
+    sql: "SELECT extract(epoch FROM now() - max(created_at)) FROM transactions"
     expect: "< 26h"
 limits:
   restore_timeout: 15m
