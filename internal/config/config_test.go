@@ -35,6 +35,10 @@ func TestValidate(t *testing.T) {
 		{"check without sql", func(c *Config) { c.Checks[0].SQL = "" }, "sql is required"},
 		{"duplicate check", func(c *Config) { c.Checks = append(c.Checks, c.Checks[0]) }, "duplicate"},
 		{"negative timeout", func(c *Config) { c.Limits.RestoreTimeout = -time.Second }, "restore_timeout"},
+		{"missing expect", func(c *Config) { c.Checks[0].Expect = "" }, `"users": expect is required`},
+		{"garbage expect", func(c *Config) { c.Checks[0].Expect = "banana" }, `"users": invalid expect`},
+		{"unknown unit", func(c *Config) { c.Checks[0].Expect = "< 26x" }, `"users": invalid expect`},
+		{"valid duration expect", func(c *Config) { c.Checks[0].Expect = "< 26h" }, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

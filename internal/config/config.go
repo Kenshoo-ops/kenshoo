@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/Kenshoo-ops/kenshoo/internal/check"
 )
 
 // DefaultRestoreTimeout applies when limits.restore_timeout is not set.
@@ -113,6 +115,11 @@ func (c *Config) Validate() error {
 		}
 		if ch.SQL == "" {
 			add("checks[%d].sql is required", i)
+		}
+		if ch.Expect == "" {
+			add("checks[%d] %q: expect is required", i, ch.Name)
+		} else if _, err := check.ParseExpect(ch.Expect); err != nil {
+			add("checks[%d] %q: invalid expect: %v", i, ch.Name, err)
 		}
 	}
 
