@@ -9,6 +9,7 @@ permissions:
   contents: read
 
 env:
+  KENSHOO_TEST_PG_DSN: ""
 
 jobs:
   test:
