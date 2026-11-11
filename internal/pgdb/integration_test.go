@@ -104,8 +104,8 @@ func TestQueryScalar(t *testing.T) {
 		"SELECT id FROM users":             "more than one row",
 		"SELECT 1, 2":                      "exactly one column",
 		"SELECT NULL":                      "NULL",
-		"INSERT INTO users VALUES (9)":     "read-only",
-		"SELECT * FROM missing_table":      "does not exist",
+		"INSERT INTO users VALUES (9)":     "SQLSTATE 25006", // read_only_sql_transaction
+		"SELECT * FROM missing_table":      "SQLSTATE 42P01", // undefined_table
 	}
 	for sql, want := range bad {
 		_, err := db.QueryScalar(ctx, sql)

@@ -26,8 +26,10 @@ type Result struct {
 	Duration time.Duration
 }
 
-// Querier runs a query that returns a single value. The Postgres implementation
-// comes later, which keeps checks testable without a database.
+// Querier runs a query that returns a single value. It keeps checks testable without a
+// database; the Postgres implementation is internal/pgdb. A returned error is copied into
+// the check's result and from there into logs, so it must be safe to log: no query result
+// and no database message text.
 type Querier interface {
 	QueryScalar(ctx context.Context, sql string) (string, error)
 }
