@@ -180,13 +180,13 @@ func (d Database) QueryScalar(ctx context.Context, sql string) (string, error) {
 
 	rows, err := tx.Query(ctx, sql)
 	if err != nil {
-		return "", err
+		return "", safeQueryError(err)
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
-			return "", err
+			return "", safeQueryError(err)
 		}
 		return "", errors.New("query returned no rows")
 	}
@@ -200,7 +200,7 @@ func (d Database) QueryScalar(ctx context.Context, sql string) (string, error) {
 		return "", errors.New("query returned more than one row")
 	}
 	if err := rows.Err(); err != nil {
-		return "", err
+		return "", safeQueryError(err)
 	}
 	if isNull {
 		return "", errors.New("query returned NULL")
