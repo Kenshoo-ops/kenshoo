@@ -42,7 +42,7 @@ func TestRunWithTimesOut(t *testing.T) {
 
 	var out, errOut bytes.Buffer
 	start := time.Now()
-	code := runWith(parent, []string{"--config", path}, &out, &errOut, factory)
+	code := runWith(parent, []string{"--config", path}, &out, &errOut, testDeps(factory))
 	elapsed := time.Since(start)
 
 	if code != 1 {

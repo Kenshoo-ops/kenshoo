@@ -49,7 +49,7 @@ func TestRunWithFetchesThenReportsRestoreNotImplemented(t *testing.T) {
 	m.Put("my-app/backup.dump", []byte("fake dump"), time.Now())
 
 	var out, errOut bytes.Buffer
-	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, memFactory(m))
+	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, testDeps(memFactory(m)))
 
 	if code != 3 {
 		t.Fatalf("exit code = %d, want 3 (stderr: %s)", code, errOut.String())
@@ -61,7 +61,7 @@ func TestRunWithFetchesThenReportsRestoreNotImplemented(t *testing.T) {
 
 func TestRunWithNoBackup(t *testing.T) {
 	var out, errOut bytes.Buffer
-	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, memFactory(storage.NewMemStore()))
+	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, testDeps(memFactory(storage.NewMemStore())))
 
 	if code != 4 {
 		t.Fatalf("exit code = %d, want 4", code)
@@ -76,7 +76,7 @@ func TestRunWithStorageError(t *testing.T) {
 		return nil, errors.New("boom")
 	}
 	var out, errOut bytes.Buffer
-	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, failing)
+	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, testDeps(failing))
 
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)
@@ -92,7 +92,7 @@ func TestRunWithDownloadError(t *testing.T) {
 	m.DownloadErr = errors.New("connection reset")
 
 	var out, errOut bytes.Buffer
-	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, memFactory(m))
+	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, testDeps(memFactory(m)))
 
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)

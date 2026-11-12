@@ -98,3 +98,17 @@ Please report vulnerabilities privately. See [SECURITY.md](SECURITY.md).
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+## Throwaway server and exit codes
+
+kenshoo restores into a database it creates itself on a throwaway PostgreSQL server and drops it afterwards. It never touches any other database. Set `KENSHOO_ADMIN_DSN` to that server (the role needs `CREATEDB`); the server's major version must equal `target.version`.
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Verified: restored and every check passed |
+| 1 | kenshoo itself failed (configuration, storage, database, timeout): it could not judge the backup |
+| 2 | Bad usage, for example `KENSHOO_ADMIN_DSN` is not set |
+| 3 | Restoring this backup type is not implemented yet |
+| 4 | The store holds no backup |
+| 5 | The backup could not be restored: the backup is bad |
+| 6 | Restored, but a data check failed: the backup is bad |
