@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -98,6 +99,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Target.Engine != "postgres" {
 		add("target.engine must be %q (got %q)", "postgres", c.Target.Engine)
+	}
+	if v, _ := strconv.Atoi(c.Target.Version); v <= 0 || strconv.Itoa(v) != c.Target.Version {
+		add("target.version must be a PostgreSQL major version such as \"16\" (got %q)", c.Target.Version)
 	}
 	if len(c.Checks) == 0 {
 		add("at least one check is required")
