@@ -22,10 +22,10 @@ func TestNewUnknownRestorer(t *testing.T) {
 	}
 }
 
-func TestStubIsNotImplemented(t *testing.T) {
+func TestRestoreRejectsAnEmptyArtifact(t *testing.T) {
 	r, _ := New("pg_dump")
 	err := r.Restore(context.Background(), Artifact{}, Target{})
-	if !errors.Is(err, ErrNotImplemented) {
-		t.Errorf("error = %v, want ErrNotImplemented", err)
+	if err == nil || errors.Is(err, ErrNotImplemented) || errors.Is(err, ErrRestoreFailed) {
+		t.Errorf("error = %v, want a plain error: an empty artifact is a kenshoo bug, not a bad backup", err)
 	}
 }
