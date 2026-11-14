@@ -1,0 +1,22 @@
+name: publish
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write   # the called workflow can only use permissions the caller grants
+    # Pinned to a released version of the pipeline, like sample-app.
+    uses: Kenshoo-ops/kenshoo-workflows/.github/workflows/secure-build.yml@v0.1.3
+    with:
+      image: ghcr.io/kenshoo-ops/kenshoo
