@@ -44,15 +44,18 @@ func memFactory(m *storage.MemStore) storeFactory {
 	return func(context.Context, config.Storage) (storage.Store, error) { return m, nil }
 }
 
-func TestRunWithFetchesThenReportsRestoreNotImplemented(t *testing.T) {
+func TestRunWithAnInvalidArchiveIsABadBackup(t *testing.T) {
 	m := storage.NewMemStore()
 	m.Put("my-app/backup.dump", []byte("fake dump"), time.Now())
 
 	var out, errOut bytes.Buffer
 	code := runWith(context.Background(), []string{"--config", writeWiringConfig(t)}, &out, &errOut, testDeps(memFactory(m)))
 
-	if code != 3 {
-		t.Fatalf("exit code = %d, want 3 (stderr: %s)", code, errOut.String())
+	if code != 5 {
+		t.Fatalf("exit code = %d, want 5: a file that is not a pg_dump archive is a bad backup (stderr: %s)", code, errOut.String())
+	}
+	if !strings.Contains(errOut.String(), "missing PGDMP header") {
+		t.Errorf("stderr = %q, want it to say why the archive was rejected", errOut.String())
 	}
 	if !strings.Contains(out.String(), "fetched backup backup.dump") {
 		t.Errorf("stdout = %q, want it to report the fetched backup", out.String())

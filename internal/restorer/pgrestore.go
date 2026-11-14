@@ -131,8 +131,7 @@ func classifyRestore(ctx context.Context, err error, stderr string) error {
 	return fmt.Errorf("run pg_restore: %w", err)
 }
 
-// restore loads the archive into the database the DSN names. Exported Restore does not call
-// it yet: it is wired in once the throwaway database is provisioned by kenshoo itself.
+// restore loads the archive into the database the DSN names, starting pg_restore through run.
 func (pgDump) restore(ctx context.Context, run commandRunner, a Artifact, t Target) error {
 	if a.Path == "" {
 		return errors.New("pg_restore: artifact has no file")

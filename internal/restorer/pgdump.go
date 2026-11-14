@@ -64,6 +64,9 @@ func (pgDump) Fetch(ctx context.Context, store storage.Store, prefix string) (Ar
 	return Artifact{Name: path.Base(obj.Key), Path: tmp}, nil
 }
 
+// Restore loads the artifact into the database t.DSN names with pg_restore. The error says whose
+// fault a failure is: ErrRestoreFailed means the backup is bad, anything else means kenshoo
+// could not run (pg_restore missing, deadline reached).
 func (pgDump) Restore(ctx context.Context, a Artifact, t Target) error {
-	return fmt.Errorf("pg_dump restore: %w", ErrNotImplemented)
+	return (pgDump{}).restore(ctx, execRunner, a, t)
 }
