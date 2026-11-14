@@ -52,3 +52,22 @@ jobs:
             echo "pgdb tests were skipped: KENSHOO_TEST_PG_DSN is not reaching them" >&2
             exit 1
           fi
+
+  image:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build --build-arg VERSION=ci -t kenshoo:ci .
+      - name: Smoke test the image
+        run: |
+          set -eu
+          docker run --rm kenshoo:ci --version
+          docker run --rm --entrypoint pg_restore kenshoo:ci --version | grep -q "(PostgreSQL) 16"
+          test "$(docker run --rm --entrypoint id kenshoo:ci -u)" = "65532"
+          docker run --rm -v "$PWD/examples:/etc/kenshoo:ro" kenshoo:ci --config /etc/kenshoo/kenshoo.example.yaml --validate
+          code=0
+          docker run --rm -v "$PWD/examples:/etc/kenshoo:ro" kenshoo:ci --config /etc/kenshoo/kenshoo.example.yaml || code=$?
+          test "$code" = 2
