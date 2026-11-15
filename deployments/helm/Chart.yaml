@@ -1,0 +1,5 @@
+apiVersion: v2
+name: kenshoo
+description: Restores the newest backup into a throwaway PostgreSQL and checks the data, on a schedule
+type: application
+version: 0.1.0

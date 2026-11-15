@@ -1,0 +1,13 @@
+{{- $storage := .Values.config.source.storage }}
+{{- $_ := required "config.source.storage.bucket is required" $storage.bucket }}
+{{- $_ := required "config.source.storage.region is required" $storage.region }}
+{{- if not .Values.config.checks }}{{ fail "config.checks needs at least one check" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "kenshoo.labels" . | nindent 4 }}
+data:
+  kenshoo.yaml: |
+    {{- toYaml (merge (dict "target" (dict "engine" "postgres" "version" (toString .Values.postgres.major))) .Values.config) | nindent 4 }}

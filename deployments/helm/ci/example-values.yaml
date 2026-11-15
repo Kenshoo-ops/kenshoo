@@ -1,0 +1,13 @@
+config:
+  source:
+    storage:
+      bucket: backups
+      region: af-casablanca-1
+      prefix: my-app/
+  checks:
+    - name: users-not-empty
+      sql: "SELECT count(*) FROM users"
+      expect: "> 0"
+    - name: backup-freshness
+      sql: "SELECT extract(epoch FROM now() - max(created_at)) FROM transactions"
+      expect: "< 26h"
