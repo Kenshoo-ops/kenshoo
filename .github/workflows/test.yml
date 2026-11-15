@@ -71,3 +71,12 @@ jobs:
           code=0
           docker run --rm -v "$PWD/examples:/etc/kenshoo:ro" kenshoo:ci --config /etc/kenshoo/kenshoo.example.yaml || code=$?
           test "$code" = 2
+      - name: Scan the image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: kenshoo:ci
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
