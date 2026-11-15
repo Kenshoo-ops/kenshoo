@@ -80,3 +80,18 @@ jobs:
           ignore-unfixed: true
           exit-code: "1"
           format: table
+
+  chart:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tool versions
+        run: |
+          helm version --short
+          yq --version
+      - name: Lint the chart
+        run: helm lint deployments/helm -f deployments/helm/ci/example-values.yaml --strict
+      - name: Test the chart
+        run: deployments/helm/test.sh

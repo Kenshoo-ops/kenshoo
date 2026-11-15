@@ -1,0 +1,101 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "kenshoo.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  timeZone: {{ .Values.timeZone | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: {{ .Values.job.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: {{ .Values.job.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.job.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: {{ .Values.job.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "kenshoo.labels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+            - name: postgres
+              image: {{ .Values.postgres.image | quote }}
+              restartPolicy: Always
+              args: ["-c", "listen_addresses=127.0.0.1"]
+              env:
+                - name: POSTGRES_HOST_AUTH_METHOD
+                  value: trust
+                - name: PGDATA
+                  value: /var/lib/postgresql/data/pgdata
+              securityContext:
+                runAsUser: 999
+                runAsGroup: 999
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              startupProbe:
+                exec:
+                  command: ["pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+                periodSeconds: 2
+                failureThreshold: 60
+              resources:
+                {{- toYaml .Values.resources.postgres | nindent 16 }}
+              volumeMounts:
+                - {name: pgdata, mountPath: /var/lib/postgresql/data}
+                - {name: pgrun, mountPath: /var/run/postgresql}
+                - {name: pgtmp, mountPath: /tmp}
+          containers:
+            - name: kenshoo
+              image: {{ include "kenshoo.image" . | quote }}
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: KENSHOO_ADMIN_DSN
+                  value: postgres://postgres@127.0.0.1:5432/postgres?sslmode=disable
+                {{- if .Values.credentialsSecret }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.credentialsSecret | quote }}
+                      key: AWS_ACCESS_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.credentialsSecret | quote }}
+                      key: AWS_SECRET_ACCESS_KEY
+                {{- end }}
+              securityContext:
+                runAsUser: 65532
+                runAsGroup: 65532
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                {{- toYaml .Values.resources.kenshoo | nindent 16 }}
+              volumeMounts:
+                - {name: config, mountPath: /etc/kenshoo, readOnly: true}
+                - {name: tmp, mountPath: /tmp}
+          volumes:
+            - name: config
+              configMap:
+                name: {{ .Release.Name }}
+            - name: tmp
+              emptyDir:
+                sizeLimit: {{ .Values.job.tmpSize }}
+            - name: pgdata
+              emptyDir:
+                sizeLimit: {{ .Values.postgres.dataSize }}
+            - name: pgrun
+              emptyDir: {}
+            - name: pgtmp
+              emptyDir: {}

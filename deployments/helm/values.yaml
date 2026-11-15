@@ -1,0 +1,51 @@
+# The image is pinned by digest. The pipeline signs the multi-arch index, so this is the digest
+# Kyverno verifies. Update it when a new image is published.
+image:
+  repository: ghcr.io/kenshoo-ops/kenshoo
+  digest: sha256:eb15ac35173db03cd2a7a55fb31633ee6bbd4e2f7744cfe682831bcf54636fe9
+
+schedule: "17 3 * * *"
+timeZone: "Etc/UTC"
+
+job:
+  # Must be longer than config.limits.restore_timeout, or Kubernetes kills the run first.
+  activeDeadlineSeconds: 1800
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  # The backup is downloaded to /tmp before it is restored.
+  tmpSize: 2Gi
+
+# The throwaway server: a native sidecar that starts before kenshoo and stops when it exits.
+# It listens on the pod's loopback only, so nothing else can reach it and there is no admin
+# password to store. major must match the image; it is written into target.version.
+postgres:
+  major: 16
+  image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
+  dataSize: 5Gi
+
+# Existing Secret with AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY for the object store.
+# Leave empty if the pod gets credentials another way.
+credentialsSecret: ""
+
+resources:
+  kenshoo:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}
+  postgres:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 768Mi}
+
+# Written to /etc/kenshoo/kenshoo.yaml. target is generated from postgres.major.
+config:
+  source:
+    type: pg_dump
+    storage:
+      type: s3
+      bucket: ""
+      region: ""
+      prefix: ""
+      # endpoint: http://store.example.svc:8333   # for a self-hosted S3-compatible store
+  checks: []
+  limits:
+    restore_timeout: 15m
