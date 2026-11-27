@@ -13,7 +13,7 @@ func init() {
 	Register("pg_dump", func() Restorer { return pgDump{} })
 }
 
-// pgDump restores pg_dump files. Fetch is implemented; Restore is still a stub.
+// pgDump restores custom-format pg_dump files: Fetch downloads the newest one, Restore runs pg_restore.
 type pgDump struct{}
 
 func (pgDump) Name() string { return "pg_dump" }
