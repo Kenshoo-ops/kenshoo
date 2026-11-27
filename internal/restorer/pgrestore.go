@@ -55,9 +55,14 @@ func execRunner(ctx context.Context, name string, args, env []string) (string, e
 	return stderr.String(), err
 }
 
+// childEnvKeys are the only variables pg_restore inherits, matched as exact keys. Anything
+// else in the caller's environment (cloud credentials, KENSHOO_ADMIN_DSN, tokens) stays out.
+var childEnvKeys = map[string]bool{"PATH": true, "TMPDIR": true, "LANG": true}
+
 // parseTarget turns a postgres:// URL into the environment pg_restore runs with and the
-// database name to restore into. Inherited PG* variables are dropped so nothing from the
-// caller's shell can redirect the restore. Errors never include the DSN: it holds a password.
+// database name to restore into. The environment is an allow-list (childEnvKeys plus the PG*
+// variables set here), so nothing from the caller's shell can redirect the restore or leak into
+// the child. Errors never include the DSN: it holds a password.
 func parseTarget(base []string, dsn string) (env []string, dbname string, err error) {
 	u, perr := url.Parse(dsn)
 	if perr != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" {
@@ -71,9 +76,9 @@ func parseTarget(base []string, dsn string) (env []string, dbname string, err er
 		return nil, "", errors.New("target DSN must name a database using only letters, digits, _ . $ -")
 	}
 
-	env = make([]string, 0, len(base)+6)
+	env = make([]string, 0, len(childEnvKeys)+5)
 	for _, kv := range base {
-		if !strings.HasPrefix(kv, "PG") {
+		if key, _, ok := strings.Cut(kv, "="); ok && childEnvKeys[key] {
 			env = append(env, kv)
 		}
 	}

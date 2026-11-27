@@ -66,7 +66,7 @@ func TestParseTargetBuildsEnvAndStripsInheritedPGVars(t *testing.T) {
 	if db != "kenshoo_verify_ab12" {
 		t.Errorf("database = %q", db)
 	}
-	for _, want := range []string{"HOME=/home/x", "PGHOST=localhost", "PGPORT=5432", "PGUSER=verifier", "PGPASSWORD=s3cret", "PGSSLMODE=disable"} {
+	for _, want := range []string{"PGHOST=localhost", "PGPORT=5432", "PGUSER=verifier", "PGPASSWORD=s3cret", "PGSSLMODE=disable"} {
 		if !hasItem(env, want) {
 			t.Errorf("env is missing %q", want)
 		}
