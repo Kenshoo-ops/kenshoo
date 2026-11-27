@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+
+	"github.com/Kenshoo-ops/kenshoo/internal/dsnquery"
 	"os"
 	"os/exec"
 	"regexp"
@@ -60,6 +62,9 @@ func parseTarget(base []string, dsn string) (env []string, dbname string, err er
 	u, perr := url.Parse(dsn)
 	if perr != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" {
 		return nil, "", errors.New("target DSN must be a postgres:// URL with a host")
+	}
+	if qerr := dsnquery.Check(u); qerr != nil {
+		return nil, "", qerr
 	}
 	dbname = strings.TrimPrefix(u.Path, "/")
 	if !dbNamePattern.MatchString(dbname) {
