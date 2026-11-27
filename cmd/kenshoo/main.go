@@ -29,6 +29,9 @@ var version = "dev"
 // server. kenshoo creates, uses and drops one database there and never touches another.
 const adminDSNEnv = "KENSHOO_ADMIN_DSN"
 
+// debugRestoreEnv set to "1" includes pg_restore's raw output in restore errors.
+const debugRestoreEnv = "KENSHOO_DEBUG_RESTORE"
+
 // Exit codes. 5 and 6 mean the backup is bad; 1 means kenshoo itself could not judge it.
 const (
 	exitVerified       = 0
@@ -222,7 +225,7 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, d dep
 	}
 	fmt.Fprintf(stdout, "provisioned %s on PostgreSQL %d\n", db.Name(), db.ServerMajor())
 
-	restoreErr := rs.Restore(ctx, art, restorer.Target{DSN: db.DSN()})
+	restoreErr := rs.Restore(ctx, art, restorer.Target{DSN: db.DSN(), Debug: d.getenv(debugRestoreEnv) == "1"})
 	if errors.Is(restoreErr, restorer.ErrNotImplemented) {
 		fmt.Fprintf(stderr, "restoring %q backups is not implemented yet\n", cfg.Source.Type)
 		return exitNotImplemented
@@ -235,6 +238,9 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, d dep
 		state := verify.Decide(nil, restoreErr, nil)
 		if state == verify.RestoreFailed {
 			fmt.Fprintf(stderr, "backup could not be restored: %v\n", restoreErr)
+			if d.getenv(debugRestoreEnv) != "1" {
+				fmt.Fprintf(stderr, "hint: set %s=1 and run again to include pg_restore's output (it can quote backup data)\n", debugRestoreEnv)
+			}
 		} else {
 			fmt.Fprintf(stderr, "error: restore: %v\n", restoreErr)
 		}
