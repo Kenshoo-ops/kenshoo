@@ -72,6 +72,9 @@ func Load(path string) (*Config, error) {
 	if err := dec.Decode(&cfg); err != nil {
 		return nil, fmt.Errorf("parse config %s: %w", path, err)
 	}
+	if err := noMoreDocuments(dec); err != nil {
+		return nil, fmt.Errorf("parse config %s: %w", path, err)
+	}
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid config %s: %w", path, err)
 	}
