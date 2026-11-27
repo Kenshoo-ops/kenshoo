@@ -4,7 +4,7 @@
 
 kenshoo (from the Japanese 検証, *kenshō*, "verification") restores your latest database backup into a throwaway database, runs checks against the restored data, and reports whether the backup is really usable. A backup job that finishes with "success" only proves a file was written. kenshoo proves the file works.
 
-> **Status: early development.** The skeleton is in place and tested (configuration, the `Store`, `Querier`, `Check` and `Restorer` interfaces, state logic), and a `pg_dump` fetch step works against an in-memory store. The restore itself, real storage and the checks are not implemented yet, so kenshoo cannot verify a real backup today. See the [roadmap](#roadmap).
+> **Status: early development, not released yet.** kenshoo verifies a real backup end to end: it fetches the newest `pg_dump -Fc` (custom format) dump from S3-compatible storage, restores it into a throwaway database, runs your SQL checks and reports through logs and the exit code. It ships as a signed container image and a Helm chart (CronJob), but the chart has only been dry-run on a local cluster so far. Prometheus metrics and alerts are not built yet. See the [roadmap](#roadmap).
 
 ## Why
 
@@ -18,15 +18,15 @@ Each run is one short-lived job:
 2. Find the newest backup in storage and download it.
 3. Start an empty temporary PostgreSQL database.
 4. Restore the backup into it.
-5. Run checks: restore succeeded, schema version, row counts, data freshness, custom SQL, restore duration.
-6. Report the result as Prometheus metrics, logs and alerts.
+5. Run the checks from the config: each one is a SQL query with an expected result.
+6. Report the result in the logs and the exit code (metrics and alerts are planned).
 7. Throw everything away.
 
 The main signal is **time since the last verified restore**: the number that tells you whether you could recover right now.
 
-## Planned configuration
+## Configuration
 
-*This is the intended shape of the config. It may change before the first release.*
+*The shape of the config. It may still change before the first release. A check's query must return one number (for durations, return seconds); `expect` compares it.*
 
 ```yaml
 source:
@@ -45,7 +45,7 @@ checks:
     sql: "SELECT count(*) FROM users"
     expect: "> 0"
   - name: backup-freshness
-    sql: "SELECT now() - max(created_at) FROM transactions"
+    sql: "SELECT extract(epoch FROM now() - max(created_at)) FROM transactions"
     expect: "< 26h"
 limits:
   restore_timeout: 15m
@@ -54,9 +54,9 @@ limits:
 ## Scope
 
 **Version 1:**
-- PostgreSQL backups made with `pg_dump`, stored in S3-compatible object storage
+- PostgreSQL backups made with `pg_dump -Fc` (custom format), stored in S3-compatible object storage
 - Config-driven checks
-- Prometheus metrics and Telegram alerts
+- Results in logs and the exit code; Prometheus metrics and Telegram alerts come next
 - Runs as a Kubernetes CronJob
 
 **Later:** point-in-time recovery (WAL-G, pgBackRest), other database engines, other storage backends, a Kubernetes operator.
@@ -80,11 +80,12 @@ The pipeline signs the image, the cluster refuses anything unsigned, and the ver
 
 - [x] Verifier skeleton: configuration, `Store`, `Querier`, `Check` and `Restorer` interfaces, state logic, unit tests
 - [x] `pg_dump` fetch step with an in-memory store
-- [ ] S3-compatible store (OCI Object Storage)
-- [ ] `pg_restore` restore step
-- [ ] Postgres query layer, built-in checks and custom SQL checks
+- [x] S3-compatible store
+- [x] `pg_restore` restore step
+- [x] Postgres query layer, built-in checks and custom SQL checks
 - [ ] Prometheus metrics and Telegram alerts
-- [ ] Container image and Helm chart
+- [x] Signed container image and Helm chart
+- [ ] Run it in the cluster with a real backup (Argo CD Application)
 - [ ] Additional restorers (WAL-G, pgBackRest)
 
 ## Contributing
