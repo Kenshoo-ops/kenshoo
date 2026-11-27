@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+
+	"github.com/Kenshoo-ops/kenshoo/internal/dsnquery"
 	"strconv"
 	"strings"
 	"time"
@@ -60,6 +62,9 @@ func withDatabase(dsn, name string) (string, error) {
 	u, err := url.Parse(dsn)
 	if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" {
 		return "", errors.New("admin DSN must be a postgres:// URL with a host")
+	}
+	if err := dsnquery.Check(u); err != nil {
+		return "", err
 	}
 	u.Path = "/" + name
 	u.RawPath = ""
