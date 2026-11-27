@@ -21,19 +21,19 @@ func fakePgRestore(t *testing.T, exit, stderr string) string {
 		t.Skip("needs a POSIX shell")
 	}
 	dir := t.TempDir()
+	// The values are written into the script, not passed as environment variables:
+	// pg_restore only inherits an allow-list of variables.
+	q := func(v string) string { return "'" + strings.ReplaceAll(v, "'", `'\''`) + "'" }
 	script := "#!/bin/sh\n" +
-		"printf '%s\\n' \"$@\" > \"$FAKE_DIR/args\"\n" +
-		"printf '%s' \"$PGPASSWORD\" > \"$FAKE_DIR/password\"\n" +
-		"printf '%s' \"$PGHOST\" > \"$FAKE_DIR/host\"\n" +
-		"echo \"$FAKE_STDERR\" >&2\n" +
-		"exit \"$FAKE_EXIT\"\n"
+		"printf '%s\\n' \"$@\" > " + q(filepath.Join(dir, "args")) + "\n" +
+		"printf '%s' \"$PGPASSWORD\" > " + q(filepath.Join(dir, "password")) + "\n" +
+		"printf '%s' \"$PGHOST\" > " + q(filepath.Join(dir, "host")) + "\n" +
+		"echo " + q(stderr) + " >&2\n" +
+		"exit " + q(exit) + "\n"
 	if err := os.WriteFile(filepath.Join(dir, "pg_restore"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir)
-	t.Setenv("FAKE_DIR", dir)
-	t.Setenv("FAKE_EXIT", exit)
-	t.Setenv("FAKE_STDERR", stderr)
 	return dir
 }
 
