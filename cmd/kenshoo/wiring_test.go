@@ -29,7 +29,7 @@ type fakeRestorer struct {
 
 func (f *fakeRestorer) Name() string { return "pg_dump" }
 
-func (f *fakeRestorer) Fetch(context.Context, storage.Store, string) (restorer.Artifact, error) {
+func (f *fakeRestorer) Fetch(context.Context, storage.Store, string, string) (restorer.Artifact, error) {
 	f.fetches++
 	if f.fetchErr != nil {
 		return restorer.Artifact{}, f.fetchErr

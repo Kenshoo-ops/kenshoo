@@ -51,7 +51,7 @@ func (m *MemStore) SetReportedSize(key string, size int64) {
 }
 
 // Latest returns the newest object whose key starts with prefix, or ErrNoBackup.
-func (m *MemStore) Latest(ctx context.Context, prefix string) (Object, error) {
+func (m *MemStore) Latest(ctx context.Context, prefix, suffix string) (Object, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

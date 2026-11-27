@@ -68,7 +68,7 @@ func NewS3Store(ctx context.Context, opts S3Options) (*S3Store, error) {
 // Latest returns the newest object under prefix, or ErrNoBackup.
 // It walks every page of the listing, because S3 returns at most 1000 keys per page.
 // Keys ending in "/" are folder placeholders created by consoles, not backups, so they are skipped.
-func (s *S3Store) Latest(ctx context.Context, prefix string) (Object, error) {
+func (s *S3Store) Latest(ctx context.Context, prefix, suffix string) (Object, error) {
 	pages := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(s.bucket),
 		Prefix: aws.String(prefix),

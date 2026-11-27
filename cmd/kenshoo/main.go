@@ -182,7 +182,7 @@ func runWith(ctx context.Context, args []string, stdout, stderr io.Writer, d dep
 		return exitError
 	}
 
-	art, fetchErr := rs.Fetch(ctx, store, cfg.Source.Storage.Prefix)
+	art, fetchErr := rs.Fetch(ctx, store, cfg.Source.Storage.Prefix, "")
 	if fetchErr != nil {
 		state := verify.Decide(fetchErr, nil, nil)
 		switch {

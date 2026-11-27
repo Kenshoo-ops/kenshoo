@@ -14,7 +14,7 @@ func TestPgDumpFetchDetectsOversizedDownload(t *testing.T) {
 	store.Put("app/a.dump", []byte("12345"), time.Now())
 	store.SetReportedSize("app/a.dump", 2) // smaller than the 5 bytes actually delivered
 
-	a, err := pgDump{}.Fetch(context.Background(), store, "app/")
+	a, err := pgDump{}.Fetch(context.Background(), store, "app/", "")
 	if err == nil {
 		a.Remove()
 		t.Fatal("expected an error when more bytes arrive than the store reported")

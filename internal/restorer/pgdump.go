@@ -23,8 +23,8 @@ func (pgDump) Name() string { return "pg_dump" }
 //
 // If the store holds no backup, the returned error wraps storage.ErrNoBackup, so the
 // caller can report "no_backup" instead of a generic failure.
-func (pgDump) Fetch(ctx context.Context, store storage.Store, prefix string) (Artifact, error) {
-	obj, err := store.Latest(ctx, prefix)
+func (pgDump) Fetch(ctx context.Context, store storage.Store, prefix, suffix string) (Artifact, error) {
+	obj, err := store.Latest(ctx, prefix, suffix)
 	if err != nil {
 		return Artifact{}, fmt.Errorf("find latest backup: %w", err)
 	}

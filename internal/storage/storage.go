@@ -21,7 +21,7 @@ type Object struct {
 // Store reads backups. The S3-compatible implementation comes later.
 type Store interface {
 	// Latest returns the newest object under prefix, or ErrNoBackup.
-	Latest(ctx context.Context, prefix string) (Object, error)
+	Latest(ctx context.Context, prefix, suffix string) (Object, error)
 	// Download streams the object with the given key into dst.
 	Download(ctx context.Context, key string, dst io.Writer) error
 }
