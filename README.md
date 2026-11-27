@@ -114,6 +114,10 @@ kenshoo restores into a database it creates itself on a throwaway PostgreSQL ser
 | 5 | The backup could not be restored: the backup is bad |
 | 6 | Restored, but a data check failed: the backup is bad |
 
+### Debugging a failed restore
+
+By default a failed restore reports only `pg_restore`'s exit status, because its output can quote rows from the backup. To see it, run again with `KENSHOO_DEBUG_RESTORE=1`. The output is then added to the error, quoted on one line. Treat it as sensitive.
+
 ### Client tools
 
 kenshoo runs `pg_restore`, so it must be on `PATH`. Use a client with the same major version as the throwaway server and the server that produced the dump. A newer `pg_dump` can write statements an older server rejects (`pg_dump` 18 writes `SET transaction_timeout`, which a 16 server refuses), and today that run is reported as a failed restore (exit 5). A dump that needs an extension the throwaway server does not have also exits 5.

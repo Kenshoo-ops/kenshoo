@@ -107,24 +107,24 @@ func TestClassifyRestore(t *testing.T) {
 	<-expired.Done()
 	notFound := &exec.Error{Name: "pg_restore", Err: exec.ErrNotFound}
 
-	if err := classifyRestore(context.Background(), nil, ""); err != nil {
+	if err := classifyRestore(context.Background(), nil, "", false); err != nil {
 		t.Errorf("success classified as %v", err)
 	}
 
-	err := classifyRestore(context.Background(), exit, "boom")
+	err := classifyRestore(context.Background(), exit, "boom", false)
 	if !errors.Is(err, ErrRestoreFailed) {
 		t.Errorf("non-zero exit: %v, want it to wrap ErrRestoreFailed", err)
 	}
-	if !strings.Contains(err.Error(), "status 3") || !strings.Contains(err.Error(), "boom") {
-		t.Errorf("message = %q, want the exit status and stderr", err)
+	if !strings.Contains(err.Error(), "status 3") || strings.Contains(err.Error(), "boom") {
+		t.Errorf("message = %q, want the exit status and no stderr", err)
 	}
 
-	err = classifyRestore(expired, exit, "")
+	err = classifyRestore(expired, exit, "", false)
 	if !errors.Is(err, context.DeadlineExceeded) || errors.Is(err, ErrRestoreFailed) {
 		t.Errorf("killed by the deadline: %v, want DeadlineExceeded and not ErrRestoreFailed", err)
 	}
 
-	err = classifyRestore(context.Background(), notFound, "")
+	err = classifyRestore(context.Background(), notFound, "", false)
 	if errors.Is(err, ErrRestoreFailed) || !errors.Is(err, exec.ErrNotFound) {
 		t.Errorf("missing binary: %v, want ErrNotFound and not ErrRestoreFailed", err)
 	}

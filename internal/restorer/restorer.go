@@ -37,6 +37,9 @@ func (a Artifact) Remove() error {
 // Target is the empty database to restore into.
 type Target struct {
 	DSN string
+	// Debug adds pg_restore's raw output to a failed-restore error. Off by default: the
+	// output can quote rows from the backup.
+	Debug bool
 }
 
 // Restorer is implemented once per backup type: pg_dump now, WAL-G and pgBackRest later.

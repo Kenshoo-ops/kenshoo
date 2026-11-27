@@ -77,6 +77,7 @@ type harness struct {
 	provisions   int
 	cfg          string
 	noAdminDSN   bool
+	debugRestore bool
 }
 
 func newHarness(t *testing.T) *harness {
@@ -106,6 +107,9 @@ func (h *harness) run(ctx context.Context, t *testing.T) (code int, stdout, stde
 			return h.db, nil
 		},
 		getenv: func(k string) string {
+			if k == debugRestoreEnv && h.debugRestore {
+				return "1"
+			}
 			if k == adminDSNEnv && !h.noAdminDSN {
 				return fakeAdminDSN
 			}
@@ -367,6 +371,24 @@ func TestExitCode(t *testing.T) {
 	for _, tt := range tests {
 		if got := exitCode(tt.state); got != tt.want {
 			t.Errorf("exitCode(%q) = %d, want %d", tt.state, got, tt.want)
+		}
+	}
+}
+
+func TestRunDebugRestoreEnvReachesTargetAndHidesTheHint(t *testing.T) {
+	for _, on := range []bool{false, true} {
+		h := newHarness(t)
+		h.debugRestore = on
+		h.fr.restoreErr = fmt.Errorf("pg_restore: %w", restorer.ErrRestoreFailed)
+		code, _, errOut := h.run(context.Background(), t)
+		if code != 5 {
+			t.Fatalf("debug=%v: exit code = %d, want 5", on, code)
+		}
+		if h.fr.target.Debug != on {
+			t.Errorf("debug=%v: Target.Debug = %v", on, h.fr.target.Debug)
+		}
+		if hint := strings.Contains(errOut, debugRestoreEnv); hint == on {
+			t.Errorf("debug=%v: hint shown = %v, want the opposite", on, hint)
 		}
 	}
 }

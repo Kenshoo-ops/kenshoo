@@ -74,8 +74,8 @@ func TestRestoreExitStatusMeansABadBackup(t *testing.T) {
 	if !errors.Is(err, ErrRestoreFailed) {
 		t.Fatalf("error = %v, want ErrRestoreFailed", err)
 	}
-	if !strings.Contains(err.Error(), "could not execute query") {
-		t.Errorf("error = %q, want it to carry pg_restore's message", err)
+	if !strings.Contains(err.Error(), "status 1") || strings.Contains(err.Error(), "could not execute query") {
+		t.Errorf("error = %q, want the exit status and none of pg_restore's output", err)
 	}
 	if strings.Contains(err.Error(), "s3cret") {
 		t.Errorf("error leaks the password: %q", err)
@@ -90,5 +90,19 @@ func TestRestoreWithoutPgRestoreIsNotABadBackup(t *testing.T) {
 	}
 	if errors.Is(err, ErrRestoreFailed) || errors.Is(err, ErrNotImplemented) {
 		t.Errorf("error = %v: a missing tool says nothing about the backup", err)
+	}
+}
+
+func TestRestoreDebugCarriesPgRestoreOutputOnOneLine(t *testing.T) {
+	fakePgRestore(t, "1", "pg_restore: error: could not execute query")
+	err := (pgDump{}).Restore(context.Background(), Artifact{Name: "b.dump", Path: dumpFile(t)}, Target{DSN: restoreDSN, Debug: true})
+	if !errors.Is(err, ErrRestoreFailed) {
+		t.Fatalf("error = %v, want ErrRestoreFailed", err)
+	}
+	if !strings.Contains(err.Error(), "could not execute query") || strings.Contains(err.Error(), "\n") {
+		t.Errorf("error = %q, want pg_restore's output quoted on one line", err)
+	}
+	if strings.Contains(err.Error(), "s3cret") {
+		t.Errorf("error leaks the password: %q", err)
 	}
 }

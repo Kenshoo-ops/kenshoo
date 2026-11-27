@@ -118,7 +118,7 @@ func checkArchive(path string) error {
 // classifyRestore decides whose fault a failed pg_restore run was. The order matters: a
 // process killed by the deadline reports an ExitError, which must not be mistaken for a
 // bad backup.
-func classifyRestore(ctx context.Context, err error, stderr string) error {
+func classifyRestore(ctx context.Context, err error, stderr string, debug bool) error {
 	if err == nil {
 		return nil
 	}
@@ -128,8 +128,10 @@ func classifyRestore(ctx context.Context, err error, stderr string) error {
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) {
 		msg := fmt.Errorf("pg_restore exited with status %d: %w", exitErr.ExitCode(), ErrRestoreFailed)
-		if stderr != "" {
-			return fmt.Errorf("%w: %s", msg, stderr)
+		// pg_restore's stderr can quote backup data and, with newlines, forge log lines:
+		// it is only included on request, and quoted onto one line.
+		if debug && stderr != "" {
+			return fmt.Errorf("%w (pg_restore output: %q)", msg, stderr)
 		}
 		return msg
 	}
@@ -150,5 +152,5 @@ func (pgDump) restore(ctx context.Context, run commandRunner, a Artifact, t Targ
 	}
 	args := []string{"--no-owner", "--no-acl", "--exit-on-error", "--dbname=" + dbname, a.Path}
 	stderr, err := run(ctx, "pg_restore", args, env)
-	return classifyRestore(ctx, err, stderr)
+	return classifyRestore(ctx, err, stderr, t.Debug)
 }
