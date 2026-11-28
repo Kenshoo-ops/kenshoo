@@ -82,7 +82,7 @@ func (s *S3Store) Latest(ctx context.Context, prefix, suffix string) (Object, er
 			return Object{}, fmt.Errorf("list objects under %q: %w", prefix, err)
 		}
 		for _, o := range page.Contents {
-			if o.Key == nil || o.LastModified == nil || strings.HasSuffix(*o.Key, "/") {
+			if o.Key == nil || o.LastModified == nil || strings.HasSuffix(*o.Key, "/") || !strings.HasSuffix(*o.Key, suffix) {
 				continue
 			}
 			if !found || o.LastModified.After(best.LastModified) {

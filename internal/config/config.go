@@ -37,6 +37,7 @@ type Storage struct {
 	Region   string `yaml:"region"`
 	Bucket   string `yaml:"bucket"`
 	Prefix   string `yaml:"prefix"`
+	Suffix   string `yaml:"suffix"`
 }
 
 // Target is the throwaway database the backup is restored into.
@@ -99,6 +100,12 @@ func (c *Config) Validate() error {
 	}
 	if c.Source.Storage.Region == "" {
 		add("source.storage.region is required (for OCI, the region identifier such as af-casablanca-1)")
+	}
+	for _, r := range c.Source.Storage.Suffix {
+		if r == '/' || r < 0x20 || r == 0x7f {
+			add("source.storage.suffix must not contain '/' or control characters")
+			break
+		}
 	}
 	if c.Target.Engine != "postgres" {
 		add("target.engine must be %q (got %q)", "postgres", c.Target.Engine)

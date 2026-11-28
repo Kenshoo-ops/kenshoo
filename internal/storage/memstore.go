@@ -50,7 +50,8 @@ func (m *MemStore) SetReportedSize(key string, size int64) {
 	m.objects[key] = o
 }
 
-// Latest returns the newest object whose key starts with prefix, or ErrNoBackup.
+// Latest returns the newest object whose key starts with prefix and ends with suffix
+// (any key if suffix is empty), or ErrNoBackup.
 func (m *MemStore) Latest(ctx context.Context, prefix, suffix string) (Object, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -58,7 +59,7 @@ func (m *MemStore) Latest(ctx context.Context, prefix, suffix string) (Object, e
 	var best Object
 	found := false
 	for _, o := range m.objects {
-		if !strings.HasPrefix(o.obj.Key, prefix) {
+		if !strings.HasPrefix(o.obj.Key, prefix) || !strings.HasSuffix(o.obj.Key, suffix) {
 			continue
 		}
 		if !found || o.obj.LastModified.After(best.LastModified) {

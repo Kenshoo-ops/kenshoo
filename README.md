@@ -37,6 +37,7 @@ source:
     region: <region>
     bucket: db-backups
     prefix: my-app/
+    suffix: .dump   # optional: only keys ending like this count as backups (skips .sha256 files)
 target:
   engine: postgres
   version: "16"
