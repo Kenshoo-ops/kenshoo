@@ -55,6 +55,9 @@ jobs:
 
   compat:
     runs-on: ubuntu-24.04
+    env:
+      # No Postgres service in this job: blank the workflow-level DSN so the integration tests skip.
+      KENSHOO_TEST_PG_DSN: ""
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
