@@ -11,7 +11,7 @@ ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w -X main.version=$VERSION" -o /out/kenshoo ./cmd/kenshoo
 
 # alpine:3.21
-FROM alpine@sha256:bc21487101ae47172509130ee1092cc273a831968d64b617776d1f69c81e42ab
+FROM alpine@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 RUN apk add --no-cache ca-certificates postgresql16-client \
  && pg_restore --version | grep -q "(PostgreSQL) 16" \
  && adduser -D -H -u 65532 kenshoo
