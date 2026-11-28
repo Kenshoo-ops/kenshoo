@@ -47,7 +47,7 @@ type Restorer interface {
 	// Name is a stable identifier such as "pg_dump".
 	Name() string
 	// Fetch finds and downloads the newest suitable backup.
-	Fetch(ctx context.Context, store storage.Store, prefix string) (Artifact, error)
+	Fetch(ctx context.Context, store storage.Store, prefix, suffix string) (Artifact, error)
 	// Restore loads the artifact into the target database.
 	Restore(ctx context.Context, a Artifact, t Target) error
 }

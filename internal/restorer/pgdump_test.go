@@ -17,7 +17,7 @@ func TestPgDumpFetchDownloadsNewestBackup(t *testing.T) {
 	store.Put("app/2026-10-01.dump", []byte("old data"), base)
 	store.Put("app/2026-10-02.dump", []byte("new data"), base.Add(24*time.Hour))
 
-	a, err := pgDump{}.Fetch(context.Background(), store, "app/")
+	a, err := pgDump{}.Fetch(context.Background(), store, "app/", "")
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestPgDumpFetchDownloadsNewestBackup(t *testing.T) {
 }
 
 func TestPgDumpFetchNoBackup(t *testing.T) {
-	_, err := pgDump{}.Fetch(context.Background(), storage.NewMemStore(), "app/")
+	_, err := pgDump{}.Fetch(context.Background(), storage.NewMemStore(), "app/", "")
 	if !errors.Is(err, storage.ErrNoBackup) {
 		t.Errorf("error = %v, want it to wrap storage.ErrNoBackup", err)
 	}
@@ -47,7 +47,7 @@ func TestPgDumpFetchDetectsTruncatedDownload(t *testing.T) {
 	store.Put("app/a.dump", []byte("12345"), time.Now())
 	store.SetReportedSize("app/a.dump", 999) // the store claims a size the data does not match
 
-	a, err := pgDump{}.Fetch(context.Background(), store, "app/")
+	a, err := pgDump{}.Fetch(context.Background(), store, "app/", "")
 	if err == nil {
 		a.Remove()
 		t.Fatal("expected an error when the size does not match")
@@ -62,7 +62,7 @@ func TestPgDumpFetchDownloadErrorLeavesNoTempFile(t *testing.T) {
 	store.Put("app/a.dump", []byte("data"), time.Now())
 	store.DownloadErr = errors.New("connection reset")
 
-	if _, err := (pgDump{}).Fetch(context.Background(), store, "app/"); err == nil {
+	if _, err := (pgDump{}).Fetch(context.Background(), store, "app/", ""); err == nil {
 		t.Fatal("expected a download error")
 	}
 	left, _ := filepath.Glob(filepath.Join(tmpDir, "kenshoo-*.dump"))

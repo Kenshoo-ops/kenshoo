@@ -15,7 +15,7 @@ func TestMemStoreLatestPicksNewestUnderPrefix(t *testing.T) {
 	s.Put("app/new.dump", []byte("new"), base.Add(24*time.Hour))
 	s.Put("other/newest.dump", []byte("x"), base.Add(48*time.Hour))
 
-	got, err := s.Latest(context.Background(), "app/")
+	got, err := s.Latest(context.Background(), "app/", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func TestMemStoreLatestPicksNewestUnderPrefix(t *testing.T) {
 }
 
 func TestMemStoreLatestEmpty(t *testing.T) {
-	_, err := NewMemStore().Latest(context.Background(), "app/")
+	_, err := NewMemStore().Latest(context.Background(), "app/", "")
 	if !errors.Is(err, ErrNoBackup) {
 		t.Errorf("error = %v, want ErrNoBackup", err)
 	}

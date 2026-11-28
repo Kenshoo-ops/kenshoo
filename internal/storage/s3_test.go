@@ -108,7 +108,7 @@ func TestS3Store_LatestWalksAllPagesAndSkipsFolderMarkers(t *testing.T) {
 	srv := fakeS3(t, map[string]string{"": s3ListPage1, "page2": s3ListPage2}, nil)
 	st := newTestS3Store(t, srv)
 
-	got, err := st.Latest(context.Background(), "my-app/")
+	got, err := st.Latest(context.Background(), "my-app/", "")
 	if err != nil {
 		t.Fatalf("Latest: %v", err)
 	}
@@ -125,7 +125,7 @@ func TestS3Store_LatestNoBackup(t *testing.T) {
 	srv := fakeS3(t, map[string]string{"": s3ListEmpty}, nil)
 	st := newTestS3Store(t, srv)
 
-	_, err := st.Latest(context.Background(), "my-app/")
+	_, err := st.Latest(context.Background(), "my-app/", "")
 	if !errors.Is(err, ErrNoBackup) {
 		t.Fatalf("got %v, want ErrNoBackup", err)
 	}

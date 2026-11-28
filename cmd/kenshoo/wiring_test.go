@@ -24,13 +24,15 @@ type fakeRestorer struct {
 	restoreFn         func(ctx context.Context) error
 	fetches, restores int
 	target            restorer.Target
+	prefix, suffix    string
 	artPath           string
 }
 
 func (f *fakeRestorer) Name() string { return "pg_dump" }
 
-func (f *fakeRestorer) Fetch(context.Context, storage.Store, string) (restorer.Artifact, error) {
+func (f *fakeRestorer) Fetch(_ context.Context, _ storage.Store, prefix, suffix string) (restorer.Artifact, error) {
 	f.fetches++
+	f.prefix, f.suffix = prefix, suffix
 	if f.fetchErr != nil {
 		return restorer.Artifact{}, f.fetchErr
 	}
@@ -389,6 +391,35 @@ func TestRunDebugRestoreEnvReachesTargetAndHidesTheHint(t *testing.T) {
 		}
 		if hint := strings.Contains(errOut, debugRestoreEnv); hint == on {
 			t.Errorf("debug=%v: hint shown = %v, want the opposite", on, hint)
+		}
+	}
+}
+
+func TestRunPassesTheStorageSuffixToFetch(t *testing.T) {
+	for _, suffix := range []string{"", ".dump"} {
+		h := newHarness(t)
+		if suffix != "" {
+			var lines []string
+			found := 0
+			for _, l := range strings.Split(h.cfg, "\n") {
+				lines = append(lines, l)
+				if strings.HasPrefix(strings.TrimSpace(l), "prefix:") {
+					found++
+					indent := l[:len(l)-len(strings.TrimLeft(l, " \t"))]
+					lines = append(lines, indent+"suffix: "+suffix)
+				}
+			}
+			if found != 1 {
+				t.Fatalf("found %d prefix lines in the test config, want 1", found)
+			}
+			h.cfg = strings.Join(lines, "\n")
+		}
+		h.run(context.Background(), t)
+		if h.fr.fetches != 1 {
+			t.Fatalf("suffix %q: fetches = %d, want 1", suffix, h.fr.fetches)
+		}
+		if h.fr.suffix != suffix {
+			t.Errorf("config suffix %q reached Fetch as %q", suffix, h.fr.suffix)
 		}
 	}
 }

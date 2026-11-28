@@ -20,8 +20,10 @@ type Object struct {
 
 // Store reads backups. The S3-compatible implementation comes later.
 type Store interface {
-	// Latest returns the newest object under prefix, or ErrNoBackup.
-	Latest(ctx context.Context, prefix string) (Object, error)
+	// Latest returns the newest object under prefix whose key ends with suffix (any key if
+	// suffix is empty), or ErrNoBackup. The suffix filters before the newest is chosen, so a
+	// newer checksum file next to the dump cannot win.
+	Latest(ctx context.Context, prefix, suffix string) (Object, error)
 	// Download streams the object with the given key into dst.
 	Download(ctx context.Context, key string, dst io.Writer) error
 }
