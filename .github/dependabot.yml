@@ -6,6 +6,10 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    groups:
+      aws-sdk:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
   - package-ecosystem: github-actions
     directory: /
     schedule:
